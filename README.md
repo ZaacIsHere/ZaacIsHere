@@ -28,5 +28,5 @@ I build highly resilient, low-latency architectures for live production environm
 ---
 
 <div align="center">
-  <i>"Move fast and break stuff for prototypes, but measure twice and cut once for production."</i>
+  <i>"Move fast and break stuff is fun for prototypes, but measure twice and cut once is for for production."</i>
 </div>
