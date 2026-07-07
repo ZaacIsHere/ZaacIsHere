@@ -89,6 +89,26 @@ def _cmd_stats(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_outcome(args: argparse.Namespace) -> int:
+    """One-liner outcome capture: the feedback half of the learning loop."""
+    import time as _time
+
+    kb = KnowledgeBase(_backend(args))
+    stamp = _time.strftime("%Y-%m-%d")
+    title = f"Outcome {stamp}: {args.text[:60]}"
+    body = args.text
+    if args.ref:
+        body += f"\n\nRef: {args.ref}"
+    path = kb.add_note(
+        title,
+        body,
+        tags=["outcome", args.verdict],
+        source=args.ref or "operator report",
+    )
+    print(f"Recorded {args.verdict} outcome: {path}")
+    return 0
+
+
 def _cmd_mcp(args: argparse.Namespace) -> int:
     from .mcp_server import MnemexMCPServer
 
@@ -146,6 +166,20 @@ def build_parser() -> argparse.ArgumentParser:
 
     pt = sub.add_parser("stats", help="show store statistics")
     pt.set_defaults(func=_cmd_stats)
+
+    po = sub.add_parser(
+        "outcome",
+        help="record whether something Claude built/advised actually worked",
+    )
+    po.add_argument("text", help="what happened, one sentence is enough")
+    po.add_argument(
+        "--verdict",
+        choices=["success", "failure", "partial"],
+        default="success",
+        help="how it turned out (default success)",
+    )
+    po.add_argument("--ref", help="pointer: PR number, commit, project name")
+    po.set_defaults(func=_cmd_outcome)
 
     pm = sub.add_parser(
         "mcp",
