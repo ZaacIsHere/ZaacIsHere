@@ -25,6 +25,7 @@ dev = ["pytest>=7"]
 
 [project.scripts]
 mnemex = "mnemex.cli:main"
+mnemex-mcp = "mnemex.cli:mcp_main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mnemex"]

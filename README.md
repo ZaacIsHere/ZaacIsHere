@@ -26,7 +26,7 @@ I build highly resilient, low-latency architectures for live production environm
 *   **[Compute-PoC-Worker](https://github.com/ZaacIsHere/Compute-PoC-Worker)**: A stateless swarm compute node that leverages free-tier GitHub Actions to poll tasks, execute payloads, and immutably persist results to Hugging Face datasets.
 
 #### 🧠 The Agentic Ecosystem
-*   **[mnemex](./mnemex)**: A zero-dependency memory + knowledge base system for Claude. Pairs a spec-exact, path-hardened implementation of Anthropic's memory tool (`memory_20250818`) with a just-in-time BM25 knowledge base (`kb_search`) and server-side context editing for ~84% token savings on long runs. Portable storage backends (local / in-memory / git-sync) let a stateless worker persist its entire memory to git or a Hugging Face dataset and rehydrate on the next run.
+*   **[mnemex](./mnemex)**: A zero-dependency memory + knowledge base system for Claude. Pairs a spec-exact, path-hardened implementation of Anthropic's memory tool (`memory_20250818`) with a just-in-time BM25 knowledge base (`kb_search`) and server-side context editing for ~84% token savings on long runs. Ships a zero-dependency MCP server (stdio + Streamable HTTP) so the same git-backed store becomes Claude's live memory across the app, desktop, Claude Code, and mobile. Portable storage backends (local / in-memory / git-sync) let a stateless worker persist its entire memory to git or a Hugging Face dataset and rehydrate on the next run.
 
 ---
 

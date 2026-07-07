@@ -89,6 +89,17 @@ def _cmd_stats(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_mcp(args: argparse.Namespace) -> int:
+    from .mcp_server import MnemexMCPServer
+
+    server = MnemexMCPServer(_backend(args))
+    if args.http:
+        server.run_http(host=args.host, port=args.http)
+    else:
+        server.run_stdio()
+    return 0
+
+
 def _cmd_ask(args: argparse.Namespace) -> int:
     try:
         from .agent import MemoryAgent
@@ -136,6 +147,22 @@ def build_parser() -> argparse.ArgumentParser:
     pt = sub.add_parser("stats", help="show store statistics")
     pt.set_defaults(func=_cmd_stats)
 
+    pm = sub.add_parser(
+        "mcp",
+        help="run the MCP server (stdio by default; --http PORT for remote)",
+    )
+    pm.add_argument("--http", type=int, metavar="PORT",
+                    help="serve Streamable HTTP on PORT instead of stdio")
+    pm.add_argument("--host", default="127.0.0.1",
+                    help="bind address for --http (default 127.0.0.1)")
+    # Re-declared here so `mnemex-mcp --dir X --git` works: MCP client
+    # configs pass flags flat, after the implicit subcommand. SUPPRESS
+    # defaults keep them from clobbering values parsed by the root parser.
+    pm.add_argument("--dir", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
+    pm.add_argument("--git", action="store_true", default=argparse.SUPPRESS,
+                    help=argparse.SUPPRESS)
+    pm.set_defaults(func=_cmd_mcp)
+
     pk = sub.add_parser("ask", help="run the live agent (needs ANTHROPIC_API_KEY)")
     pk.add_argument("prompt")
     pk.add_argument("--model", default="claude-opus-4-8")
@@ -146,6 +173,11 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     return args.func(args)
+
+
+def mcp_main(argv: list[str] | None = None) -> int:
+    """Entry point for `mnemex-mcp`: shorthand for `mnemex mcp ...`."""
+    return main(["mcp", *(argv if argv is not None else sys.argv[1:])])
 
 
 if __name__ == "__main__":  # pragma: no cover

@@ -93,6 +93,59 @@ It sends the memory tool and `kb_search` as `tools`, enables
 (keeping the 3 most recent tool exchanges, never clearing `kb_search`
 pointers), and runs the tool-use loop to completion.
 
+## MCP server — mnemex as Claude's memory, everywhere
+
+`mnemex mcp` exposes the same store over the Model Context Protocol
+(spec 2025-11-25, zero dependencies — the transports are hand-rolled
+newline-delimited JSON-RPC and a stateless Streamable HTTP endpoint). Tools:
+`kb_search`, `kb_add_note`, `memory_list`, `memory_read`, `memory_write`,
+`memory_edit`, `memory_delete`, `memory_rename` — all routed through the same
+audited, path-hardened handler as the agent loop.
+
+**Claude Code:**
+
+```bash
+claude mcp add mnemex -- mnemex-mcp --dir ~/.mnemex --git
+```
+
+**Claude Desktop** (`claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "mnemex": {
+      "command": "mnemex-mcp",
+      "args": ["--dir", "/Users/you/.mnemex", "--git"]
+    }
+  }
+}
+```
+
+**claude.ai (web/mobile) custom connector** — needs a reachable HTTPS URL, so
+run the HTTP transport behind your tunnel/host of choice:
+
+```bash
+MNEMEX_TOKEN=your-secret mnemex-mcp --dir ~/.mnemex --http 8848
+# POST JSON-RPC to http://host:8848/mcp with Authorization: Bearer your-secret
+```
+
+Point every surface at the same `--git` store and Claude has one persistent,
+inspectable, versioned memory across app, desktop, code, and mobile.
+
+### The curation loop (meta-learning)
+
+Memory systems rot write-only. Close the loop with a scheduled session (a
+Claude app routine, a cron'd `claude -p`, or a GitHub Action) that runs a
+prompt like:
+
+> Review /memories/kb with kb_search and memory_list. Merge duplicate notes,
+> promote recurring lessons into a single canonical note tagged `principle`,
+> prune anything stale or superseded, and update /memories/progress.md with
+> what changed.
+
+Because the store is git-backed, every curation pass is a commit — you can
+audit exactly how the knowledge base evolved, and revert a bad distillation.
+
 ## Storage backends
 
 All three implement one small `StorageBackend` surface, so the audited handler
@@ -118,7 +171,7 @@ path stays inside the store root as defence in depth.
 ## Tests
 
 ```bash
-pip install -e 'mnemex[dev]' && pytest    # 55 tests, ~0.1s, no network
+pip install -e 'mnemex[dev]' && pytest    # 66 tests, <1s, no network
 ```
 
 ## Layout
@@ -128,8 +181,9 @@ src/mnemex/
   memory_tool.py     spec-exact memory_20250818 handler + path safety
   knowledge_base.py  BM25 knowledge base + kb_search tool
   backends.py        local / in-memory / git-sync storage
+  mcp_server.py      MCP server (stdio + Streamable HTTP), zero deps
   agent.py           memory + kb + context-editing loop (needs anthropic SDK)
-  cli.py             mnemex init | add | search | view | reindex | stats | ask
+  cli.py             mnemex init | add | search | view | reindex | stats | mcp | ask
 ```
 
 ## License
